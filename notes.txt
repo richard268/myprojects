@@ -1,0 +1,25 @@
+1. install GNS3
+2. create lab 
+3. setup GNS3 to connect to local ubuntu host
+
+sudo chown root:richard /dev/net/tun
+sudo usermod -a -G richard
+sudo tunctl -g netdev -t tap0
+sudo ifconfig tap0 192.168.x.x netmask 255.255.255.0 up
+sudo ip route add 192.168.x.0/128 dev wlp2s0
+
+4. install GIT
+git config --global user.name "richard268"
+git config --global user.mail "xxx@yyy.com"
+
+mkdir myprojects
+cd myprojects
+git init
+
+ssh-keygen -t rsa -C "email@email.com"
+add id-rsa to github ssh key profile.
+
+5. github
+git remote add origin git@github.com:richard268/myprojects.git
+
+
