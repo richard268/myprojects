@@ -1,47 +1,34 @@
-def gv
-
 pipeline {
-    agent any
-    parameters {
-        choice(name: 'VERSION', choices: ['1.1.0', '1.2.0', '1.3.0'], description:'')
-        booleanParam(name: 'executeTests', defaultValue: true, description: '')
-    }
+  agent any
+  stages {
+    stage('Git Clone') {
+      steps {
+        rocketSend channel: 'network-build', message: 'Config Deploy Started'
+        git branch: 'dev', url: 'https://github.com/myprojects'
 
-    stages {
-        stage('init') {
-            steps {
-                script {
-                    gv = load "script.groovy"
-                }
-            }
-        }
-        
-
-        stage('Build') {
-            steps {
-                script {
-                    gv.buildApp()
-                }
-            }
-        }
-        stage('Test') {
-            when {
-                expression {
-                    params.executeTests
-                }
-            }
-            steps {
-                script {
-                    gv.testApp()
-                }
-            }
-        }
-        stage('Deploy') {
-            steps {
-                script {
-                    gv.deployApp()
-                }
-            }
-        }
+          }
+      }
+    stage ('Clean up local env'){
+      steps {
+        sh '''#!/bin/bash
+        rm -rf /root/.ansible/*'''
+      }
     }
+    stage ('Test Connectivity'){
+      steps {
+      ansiblePlaybook inventory: '${WORKSPACE}/ansible/inventory/jenkins/hosts', playbook: '${WORKSPACE}/ansible/test.yml', sudoUser: null
+      }
+    }
+    stage ('Configure OSPF'){
+      steps {
+      ansiblePlaybook inventory: '${WORKSPACE}/ansible/inventory/jenkins/hosts', playbook: '${WORKSPACE}/ansible/configure.yml', sudoUser: null
+      }
+    }
+   stage ('Build Complete'){
+   steps{
+   rocketSend attachments: [[audioUrl: '', authorIcon: '', authorName: '', color: '', imageUrl: '', messageLink: '', text: '', thumbUrl: '', title: 'lastBuild ', titleLink: 'http://127.0.0.1:8080/job/ansiblefest-sf-2017/job/master/lastBuild/', titleLinkDownload: '', videoUrl: '']], channel: 'network-build', message: 'Config Deploy Finised'
+   }
+   }
+
+  }
 }
