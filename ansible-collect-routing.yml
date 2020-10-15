@@ -1,0 +1,32 @@
+---
+  - name: Ansible run multiple commands and evaluate the output
+    connection: network_cli
+    gather_facts: false
+    hosts: all
+
+    vars:
+      datetime: "{{ lookup ('pipe', 'date +%Y-%m-%d-%H') }}"
+      backup_dir: "~/.ansible/backup/"
+    
+    tasks:
+      - name: show results
+        ios_command:
+          commands:
+            - show version
+            - show ip route 
+            - show ip route sum
+        register: cmd_result
+    
+      - name: writing output
+        local_action:
+          module: lineinfile
+          dest: "{{ backup_dir }}/{{ inventory_hostname }}-{{datetime}}.txt"
+          line: "{{ inventory_hostname }}:# show {{item.command}}\n{{item.cmdoutput}}"
+          create: yes
+        changed_when: False
+        with_items:
+          - { command: "version", cmdoutput: "{{cmd_result.stdout[0]}}" }
+          - { command: "ip route ", cmdoutput: "{{cmd_result.stdout[1]}}" }
+          - { command: "ip route sum", cmdoutput: "{{cmd_result.stdout[2]}}" }
+
+
